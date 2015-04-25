@@ -54,14 +54,12 @@ var Main = React.createClass({
     },
 
     componentDidMount: function () {
-
-        let requestOnButtonClickStream = this.buttonClickedStream.map(() => {
-            let randomOffset = Math.floor(Math.random() * 500);
-            return 'https://api.github.com/users?since=' + randomOffset;
-        });
-        let startupRequestStream = Rx.Observable.just('https://api.github.com/users');
-        let requestStream = Rx.Observable.merge(
-                startupRequestStream, requestOnButtonClickStream);
+        let requestStream = this.buttonClickedStream
+            .map(() => {
+                let randomOffset = Math.floor(Math.random() * 500);
+                return 'https://api.github.com/users?since=' + randomOffset;
+            })
+            .startWith('https://api.github.com/users');
 
         let responseStream = requestStream.flatMap(requestUrl => {
             let promise = Q.xhr.get(requestUrl);
