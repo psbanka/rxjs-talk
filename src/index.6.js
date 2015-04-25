@@ -55,11 +55,11 @@ var Main = React.createClass({
 
     componentDidMount: function () {
         let requestStream = this.buttonClickedStream
+            .startWith('init')
             .map(() => {
                 let randomOffset = Math.floor(Math.random() * 500);
                 return 'https://api.github.com/users?since=' + randomOffset;
-            })
-            .startWith('https://api.github.com/users');
+            });
 
         let responseStream = requestStream.flatMap(requestUrl => {
             let promise = Q.xhr.get(requestUrl);
