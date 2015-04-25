@@ -43,14 +43,12 @@ var Main = React.createClass({
 
     componentDidMount: function () {
         let requestStream = Rx.Observable.just('https://api.github.com/users');
-        let responseStreamOfStreams = requestStream.map(requestUrl => {
+        let responseStream = requestStream.flatMap(requestUrl => {
             let promise = Q.xhr.get(requestUrl);
             return Rx.Observable.fromPromise(promise);
         });
-        responseStreamOfStreams.subscribe(newStream => {
-            newStream.subscribe(response => {
-                this.doSomethingWithResponse(response);
-            });
+        responseStream.subscribe(response => {
+            this.doSomethingWithResponse(response);
         });
     },
 
