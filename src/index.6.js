@@ -40,13 +40,46 @@ const Button = ReactBootstrap.Button;
  * @property {String} url - "https://api.github.com/users/mojombo"
  */
 
-var Main = React.createClass({
+const Suggestion = React.createClass({
+    render: function () {
+        return (
+            <li>
+                <img src={this.props.user.avatar_url}/>
+                <a href="#" target="_blank" className="username">{this.props.user.login}</a>
+                <a href="#" className="close">x</a>
+            </li>
+        );
+    },
+});
+
+const Users = React.createClass({
+    render: function () {
+        return (
+            <ul className="suggestions">
+                <Suggestion user={this.props.users[0]}/>
+                <Suggestion user={this.props.users[1]}/>
+                <Suggestion user={this.props.users[2]}/>
+            </ul>
+        );
+    },
+});
+
+const Main = React.createClass({
+    getInitialState: function () {
+        return {
+            users: [
+                {login: '', avatar_url: ''},
+                {login: '', avatar_url: ''},
+                {login: '', avatar_url: ''},
+            ],
+        };
+    },
 
     /**
      * @param {GithubUser[]} response - list of 100 users
      */
     doSomethingWithResponse: function (response) {
-        console.log(response);
+        this.setState({users: response.data});
     },
 
     componentWillMount: function () {
@@ -81,24 +114,8 @@ var Main = React.createClass({
                      <ButtonToolbar onClick={this.refresh}>
                          <Button onClick={this.buttonClickedStream}>Refresh</Button>
                      </ButtonToolbar>
+                     <Users users={this.state.users}/>
                 </div>
-                <ul className="suggestions">
-                    <li className="suggestion1">
-                        <img />
-                        <a href="#" target="_blank" className="username">dummy1</a>
-                        <a href="#" className="close close1">x</a>
-                    </li>
-                    <li className="suggestion2">
-                        <img />
-                        <a href="#" target="_blank" className="username">dummy2</a>
-                        <a href="#" className="close close2">x</a>
-                    </li>
-                    <li className="suggestion3">
-                        <img />
-                        <a href="#" target="_blank" className="username">dummy3</a>
-                        <a href="#" className="close close3">x</a>
-                    </li>
-                </ul>
             </div>
         );
     },
