@@ -7,9 +7,17 @@
 
 require('./style/main.less');
 
+const Q = require('q-xhr');
+
 const React = require('react');
 const Rx = require('rx');
-const Q = require('q-xhr');
+const FuncSubject = require('rx-react/lib/funcSubject');
+
+const ReactBootstrap = require('react-bootstrap');
+
+// ReactBootstrap widgets
+const ButtonToolbar = ReactBootstrap.ButtonToolbar;
+const Button = ReactBootstrap.Button;
 
 /**
  * @typedef GithubUser
@@ -35,10 +43,14 @@ const Q = require('q-xhr');
 var Main = React.createClass({
 
     /**
-     * @param {GithubUser[]} response - list of users
+     * @param {GithubUser[]} response - list of 100 users
      */
     doSomethingWithResponse: function (response) {
         console.log(response);
+    },
+
+    componentWillMount: function () {
+        this.buttonClickedStream = FuncSubject.create();
     },
 
     componentDidMount: function () {
@@ -50,13 +62,19 @@ var Main = React.createClass({
         responseStream.subscribe(response => {
             this.doSomethingWithResponse(response);
         });
+        this.buttonClickedStream.subscribe(function (event) {
+            console.log('button clicked', event);
+        });
     },
 
     render: function () {
         return (
             <div className="container">
                 <div className="header">
-                     <h2>Who to follow</h2><a href="#" className="refresh">Refresh</a>
+                     <h2>Who to follow</h2>
+                     <ButtonToolbar onClick={this.refresh}>
+                         <Button onClick={this.buttonClickedStream}>Refresh</Button>
+                     </ButtonToolbar>
                 </div>
                 <ul className="suggestions">
                     <li className="suggestion1">
