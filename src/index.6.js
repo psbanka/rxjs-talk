@@ -44,19 +44,9 @@ var Main = React.createClass({
     componentDidMount: function () {
         let requestStream = Rx.Observable.just('https://api.github.com/users');
         requestStream.subscribe(requestUrl => {
-            let responseStream = Rx.Observable.create(observer => {
-                console.log('making a request');
-                Q.xhr.get(requestUrl).then(
-                    response => {
-                        observer.onNext(response);
-                    },
-                    error => {
-                        observer.onError(error);
-                    }
-                )
-                .fin(() => observer.onCompleted())
-                .done();
-            });
+            console.log('making a request');
+            let promise = Q.xhr.get(requestUrl);
+            let responseStream = Rx.Observable.fromPromise(promise);
             responseStream.subscribe(response => {
                 this.doSomethingWithResponse(response);
             });
