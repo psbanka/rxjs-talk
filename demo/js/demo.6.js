@@ -12,7 +12,7 @@ require('../style/demo.less');
 require('bootstrap');
 const React = require('react');
 
-let Main = require('rxjs-tutorial');
+const Main = require('rxjs-tutorial');
 
 $(() => {
     React.render(<Main />, document.body);
