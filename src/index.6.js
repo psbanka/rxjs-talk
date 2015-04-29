@@ -7,12 +7,11 @@
 
 require('./style/main.less');
 
+const _ = require('lodash');
 const Q = require('q-xhr');
 
 const React = require('react');
 const Rx = require('rx');
-const FuncSubject = require('rx-react/lib/funcSubject');
-
 const ReactBootstrap = require('react-bootstrap');
 
 // ReactBootstrap widgets
@@ -39,6 +38,30 @@ const Button = ReactBootstrap.Button;
  * @property {String} type - "User"
  * @property {String} url - "https://api.github.com/users/mojombo"
  */
+
+const mockGet = function () {
+    let deferred = Q.defer();
+    deferred.resolve({data: [
+        {
+            login: 'mojombo',
+            'avatar_url': 'https://avatars.githubusercontent.com/u/1?v=3',
+            url: 'https://api.github.com/users/mojombo',
+        },
+        {
+            login: 'mojombo',
+            'avatar_url': 'https://avatars.githubusercontent.com/u/1?v=3',
+            url: 'https://api.github.com/users/mojombo',
+        },
+        {
+            login: 'mojombo',
+            'avatar_url': 'https://avatars.githubusercontent.com/u/1?v=3',
+            url: 'https://api.github.com/users/mojombo',
+        },
+    ],
+    }
+    );
+    return deferred.promise;
+};
 
 const Suggestion = React.createClass({
     refresh: function () {
@@ -93,28 +116,48 @@ const Main = React.createClass({
     },
 
     refresh: function (key) {
-        console.log(key);
+        this.buttonClickedStream.onNext(key);
     },
 
     componentWillMount: function () {
-        this.buttonClickedStream = FuncSubject.create();
+        this.buttonClickedStream = (value) => {
+            this.buttonClickedStream.onNext(value);
+        };
+        for (var key in Rx.Subject.prototype) {
+            this.buttonClickedStream[key] = Rx.Subject.prototype[key];
+        }
+        Rx.Subject.call(this.buttonClickedStream);
     },
 
     componentDidMount: function () {
         let requestStream = this.buttonClickedStream
             .startWith('init')
-            .map(() => {
+            .map((index) => {
                 let randomOffset = Math.floor(Math.random() * 500);
-                return 'https://api.github.com/users?since=' + randomOffset;
+                return {index, requestUrl: 'https://api.github.com/users?since=' + randomOffset};
             });
 
-        let responseStream = requestStream.flatMap(requestUrl => {
-            let promise = Q.xhr.get(requestUrl);
-            return Rx.Observable.fromPromise(promise);
+        let responseStream = requestStream.flatMap(requestData => {
+            // let promise = mockGet(requestData.requestUrl);
+            let promise = Q.xhr.get(requestData.requestUrl);
+            let index = requestData.index;
+            return Rx.Observable.create(function (observer) {
+                promise
+                    .then(
+                        response => observer.onNext({data: response.data, index}),
+                        response => observer.onError({response, index}))
+                    .fin(() => observer.onCompleted())
+                    .done();
+            });
         });
 
-        responseStream.subscribe(response => {
-            this.setState({users: response.data});
+        responseStream.subscribe(responseData => {
+            if (_.isNumber(responseData.index)) {
+                this.state.users[responseData.index] = responseData.data[0];
+            } else {
+                this.state.users = responseData.data;
+            }
+            this.setState({users: this.state.users});
         });
     },
 
@@ -123,7 +166,7 @@ const Main = React.createClass({
             <div className="container">
                 <div className="header">
                      <h2>Who to follow</h2>
-                     <ButtonToolbar onClick={this.refresh}>
+                     <ButtonToolbar>
                          <Button onClick={this.buttonClickedStream}>Refresh</Button>
                      </ButtonToolbar>
                      <Users refresh={this.refresh} size={3} users={this.state.users}/>
