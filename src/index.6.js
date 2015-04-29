@@ -41,12 +41,20 @@ const Button = ReactBootstrap.Button;
  */
 
 const Suggestion = React.createClass({
+    refresh: function () {
+        this.props.refresh(this.props.id);
+    },
+
     render: function () {
         return (
             <li>
                 <img src={this.props.user.avatar_url}/>
-                <a href="#" target="_blank" className="username">{this.props.user.login}</a>
-                <a href="#" className="close">x</a>
+                <a
+                    href={this.props.user.url}
+                    className="username">
+                    {this.props.user.login}
+                </a>
+                <Button onClick={this.refresh} className="close">&times;</Button>
             </li>
         );
     },
@@ -54,11 +62,20 @@ const Suggestion = React.createClass({
 
 const Users = React.createClass({
     render: function () {
+        let suggestions = [];
+        for (var i = 0, len = this.props.size; i < len; i++) {
+            suggestions.push(
+                    <Suggestion
+                        refresh={this.props.refresh}
+                        user={this.props.users[i]}
+                        id={i}
+                        key={i}
+                    />
+            );
+        }
         return (
             <ul className="suggestions">
-                <Suggestion user={this.props.users[0]}/>
-                <Suggestion user={this.props.users[1]}/>
-                <Suggestion user={this.props.users[2]}/>
+                {suggestions}
             </ul>
         );
     },
@@ -68,18 +85,15 @@ const Main = React.createClass({
     getInitialState: function () {
         return {
             users: [
-                {login: '', avatar_url: ''},
-                {login: '', avatar_url: ''},
-                {login: '', avatar_url: ''},
+                {login: '', 'avatar_url': ''},
+                {login: '', 'avatar_url': ''},
+                {login: '', 'avatar_url': ''},
             ],
         };
     },
 
-    /**
-     * @param {GithubUser[]} response - list of 100 users
-     */
-    doSomethingWithResponse: function (response) {
-        this.setState({users: response.data});
+    refresh: function (key) {
+        console.log(key);
     },
 
     componentWillMount: function () {
@@ -98,11 +112,9 @@ const Main = React.createClass({
             let promise = Q.xhr.get(requestUrl);
             return Rx.Observable.fromPromise(promise);
         });
+
         responseStream.subscribe(response => {
-            this.doSomethingWithResponse(response);
-        });
-        this.buttonClickedStream.subscribe(function (event) {
-            console.log('button clicked', event);
+            this.setState({users: response.data});
         });
     },
 
@@ -114,7 +126,7 @@ const Main = React.createClass({
                      <ButtonToolbar onClick={this.refresh}>
                          <Button onClick={this.buttonClickedStream}>Refresh</Button>
                      </ButtonToolbar>
-                     <Users users={this.state.users}/>
+                     <Users refresh={this.refresh} size={3} users={this.state.users}/>
                 </div>
             </div>
         );
